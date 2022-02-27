@@ -2,7 +2,8 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QPainter>
+
+#include "line.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -19,7 +20,13 @@ public:
 private:
     Ui::MainWindow *ui;
 
+
 protected:
     void paintEvent(QPaintEvent *) override;
+
+    //QList<Line> lines;
+
 };
+
+
 #endif // MAINWINDOW_H
