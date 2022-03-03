@@ -2,31 +2,53 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QPainter>
+#include <QMessageBox>
+#include <QColorDialog>
 
 #include "line.h"
 
-QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow; }
-QT_END_NAMESPACE
+#define RADIANS 57.2958
+#define PI 3.1415926535
+
+namespace Ui {
+class MainWindow;
+}
 
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr);
+    explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+    void paintEvent(QPaintEvent*);
+
+private slots:
+    void on_btnLine_clicked();
+
+    void on_btnRotate_clicked();
+
+    void on_btnClear_clicked();
+
+    void on_pushButtonScale_clicked();
+    void on_pushButtonUp_clicked();
+    void on_pushButtonDown_clicked();
+    void on_pushButtonLeft_clicked();
+    void on_pushButtonRight_clicked();
+
+    void on_btnColor_clicked();
+
+    void on_btnBColor_clicked();
+
+    void on_pushButton_clicked();
 
 private:
     Ui::MainWindow *ui;
+    QList<Line> lines;
 
-
-protected:
-    void paintEvent(QPaintEvent *) override;
-
-    //QList<Line> lines;
-
+    QColor currentLineColor;
+    QColor currentBackgroundColor;
 };
-
 
 #endif // MAINWINDOW_H

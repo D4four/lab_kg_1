@@ -1,23 +1,49 @@
 #include "line.h"
-#include <iostream>
-#include <cmath>
+#include <QDebug>
 
-void Line::draw(QPainter& painter, int matrixCor[2][2]){
+Line::Line(double sx, double sy, double fx, double fy, QColor c, int a)
+{
+    start = QPointF(sx, sy);
+    finish = QPointF(fx, fy);
+    color = c;
+    alghoritm = a;
+}
 
-    int deltaX = matrixCor[0][1] - matrixCor[0][0];
-    int deltaY = matrixCor[1][1] - matrixCor[1][0];
+void Line::draw(QPainter& p, int w, int h)
+{
+    switch (alghoritm) {
+    case 0:
+        BInt(p, w, h);
+        break;
+    case 1:
+        Library(p, w, h);
+        break;
+    default:
+        break;
+    }
+}
+
+void Line::BInt(QPainter& p, int w, int h)
+{
+    p.setPen(QPen(color, 1));
+
+    if (int(start.x()) == int(finish.x()) && int(start.y()) == int(finish.y())) {
+        p.drawPoint(w / 2 + int(start.x()), h / 2 - int(start.y()));
+        return;
+    }
+
+    int deltaX = int(finish.x()) - int(start.x());
+    int deltaY = int(finish.y()) - int(start.y());
     int absDeltaX = abs(deltaX);
     int absDeltaY = abs(deltaY);
 
     int accretion = 0;
 
     if (absDeltaX >= absDeltaY) {
-        int y = matrixCor[1][0];
+        int y = int(start.y());
         int direction = deltaY != 0 ? (deltaY > 0 ? 1 : -1) : 0;
-        for (int x = matrixCor[0][0]; deltaX > 0 ? x <= matrixCor[0][1] : x >= matrixCor[0][1]; deltaX > 0 ? x++ : x--) {
-            painter.setPen(Qt::red);
-            painter.drawPoint(x, y);
-            painter.setPen(Qt::transparent);
+        for (int x = int(start.x()); deltaX > 0 ? x <= int(finish.x()) : x >= int(finish.x()); deltaX > 0 ? x++ : x--) {
+            p.drawPoint(w / 2 + x, h / 2 - y);
 
             accretion += absDeltaY;
 
@@ -27,12 +53,12 @@ void Line::draw(QPainter& painter, int matrixCor[2][2]){
             }
         }
     } else {
-        int x = matrixCor[0][0];
+        int x = int(start.x());
         int direction = deltaX != 0 ? (deltaX > 0 ? 1 : -1) : 0;
-        for (int y = matrixCor[1][0]; deltaY > 0 ? y <= matrixCor[1][1] : y >= matrixCor[1][1]; deltaY > 0 ? y++ : y--) {
-            painter.setPen(Qt::red);
-            painter.drawPoint(x, y);
-            painter.setPen(Qt::transparent);
+        for (int y = int(start.y()); deltaY > 0 ? y <= int(finish.y()) : y >= int(finish.y()); deltaY > 0 ? y++ : y--) {
+
+            p.drawPoint(w / 2 + x, h / 2 - y);
+
 
             accretion += absDeltaX;
 
@@ -42,20 +68,12 @@ void Line::draw(QPainter& painter, int matrixCor[2][2]){
             }
         }
     }
-};
 
-void Line::spin(int matrixCor[2][2], int deg) {
+}
 
-    int rx;
-    int ry;
-
-
-    rx = matrixCor[0][0] + (matrixCor[0][1] - matrixCor[0][0])*cos(deg*3.1415/180) - (matrixCor[1][1] - matrixCor[1][0])*sin(deg*3.1415/180);
-    ry = matrixCor[1][0] + (matrixCor[0][1] - matrixCor[0][0])*sin(deg*3.1415/180) +(matrixCor[1][1] - matrixCor[1][0])*cos(deg*3.1415/180);
-
-
-    std::cout << rx << std::endl << ry;
-    matrixCor[0][1] = rx;
-    matrixCor[1][1] = ry;
-
+void Line::Library(QPainter& p, int w, int h)
+{
+    p.setPen(QPen(color, 1));
+    p.drawLine(w / 2 + int(start.x()), h / 2 - int(start.y()),
+               w / 2 + int(finish.x()), h / 2 - int(finish.y()));
 }
