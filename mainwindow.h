@@ -5,6 +5,7 @@
 #include <QPainter>
 #include <QMessageBox>
 #include <QColorDialog>
+#include <QKeyEvent>
 
 #include "line.h"
 
@@ -23,6 +24,8 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
     void paintEvent(QPaintEvent*);
+    void keyPressEvent(QKeyEvent *e) override;
+    void keyReleaseEvent(QKeyEvent *e) override;
 
 private slots:
     void on_btnLine_clicked();
@@ -47,8 +50,9 @@ private:
     Ui::MainWindow *ui;
     QList<Line> lines;
 
-    QColor currentLineColor;
+    QColor currentLineColor[2];
     QColor currentBackgroundColor;
+    QColor color;
 };
 
 #endif // MAINWINDOW_H

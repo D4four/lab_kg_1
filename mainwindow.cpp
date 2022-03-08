@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include <QDebug>
 
+
 bool flagD[2] = {false, false};
 bool flagR[2] = {false, false};
 int alg = 0;
@@ -19,14 +20,16 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    currentLineColor = Qt::black;
+    color = Qt::black;
     currentBackgroundColor = Qt::white;
 
-    QString qss = QString("background-color: %1").arg(currentLineColor.name());
+    QString qss = QString("background-color: %1").arg(color.name());
     ui->btnColor->setStyleSheet(qss);
 
     QString qssbg = QString("background-color: %1").arg(currentBackgroundColor.name());
     ui->btnBColor->setStyleSheet(qssbg);
+    lines.append(Line(0, 0, 0, 0, currentBackgroundColor, 0));
+    lines.append(Line(0, 0, 0, 0, currentBackgroundColor, 0));
 }
 
 MainWindow::~MainWindow()
@@ -37,6 +40,7 @@ MainWindow::~MainWindow()
 void MainWindow::paintEvent(QPaintEvent*)
 {
     QPainter p(this);
+
     int canvasWidht = width() - 210;
     int canvasHeight = height()-100;
 
@@ -47,19 +51,234 @@ void MainWindow::paintEvent(QPaintEvent*)
     p.drawLine(0, canvasHeight / 2, canvasWidht, canvasHeight / 2);
 
     for (Line line : lines) {
-
+       // p.fillRect(0, 0, canvasWidht, canvasHeight, currentBackgroundColor);
         p.setPen(QPen(Qt::gray, 1, Qt::SolidLine));
         p.drawLine(canvasWidht / 2, 0, canvasWidht / 2, canvasHeight);
         p.drawLine(0, canvasHeight / 2, canvasWidht, canvasHeight / 2);
 
         line.draw(p, canvasWidht, canvasHeight);
+
+    }
+}
+
+void MainWindow::keyPressEvent(QKeyEvent *e)
+{
+
+    if (e->key() == Qt::Key_Up){
+        ui->label_9->setText("ВВЕРХ");
+        on_pushButtonUp_clicked();
+    }
+    if (e->key() == Qt::Key_Down){
+        ui->label_9->setText("ВНИЗ");
+        on_pushButtonDown_clicked();
+    }
+    if (e->key() == Qt::Key_Right){
+        ui->label_9->setText("ВПРАВО");
+        on_pushButtonRight_clicked();
+    }
+    if (e->key() == Qt::Key_Left){
+        ui->label_9->setText("ВЛЕВО");
+        on_pushButtonLeft_clicked();
+    }
+    if (e->key() == Qt::Key_Minus){
+        ui->label_9->setText("ПОВОРОТ ПРОТИВ ЧС");
+        lineSel = ui->comboBox->currentIndex();
+        if (flagR[lineSel] == false) {
+
+            if (lineSel > 0) {
+                lines[lineSel - 1] = (Line(startX[lineSel-1], startY[lineSel-1], finishX[lineSel-1], finishY[lineSel-1], currentLineColor[lineSel-1], alg));
+                repaint();
+            } else {
+                lines[lineSel + 1] = (Line(startX[lineSel+1], startY[lineSel+1], finishX[lineSel+1], finishY[lineSel+1], currentLineColor[lineSel+1], alg));
+                repaint();
+            }
+
+            alg = ui->cmbAlghoritms->currentIndex();
+
+            key = false;
+            startX[lineSel] = ui->lineStartX->text().toDouble(&key);
+            if (!key) {
+                QMessageBox::critical(this, "Ошибка", "Некорректный ввод!");
+                return;
+            }
+
+            startY[lineSel] = ui->lineStartY->text().toDouble(&key);
+            if (!key) {
+                QMessageBox::critical(this, "Ошибка", "Некорректный ввод!");
+                return;
+            }
+
+            finishX[lineSel] = ui->lineFinishX->text().toDouble(&key);
+            if (!key) {
+                QMessageBox::critical(this, "Ошибка", "Некорректный ввод!");
+                return;
+            }
+
+            finishY[lineSel] = ui->lineFinishY->text().toDouble(&key);
+            if (!key) {
+                QMessageBox::critical(this, "Ошибка", "Некорректный ввод!");
+                return;
+            }
+
+//            lines.append(Line(startX[lineSel], startY[lineSel], finishX[lineSel], finishY[lineSel], currentBackgroundColor, alg));
+//            repaint();
+
+            float rx = (startX[lineSel] + (finishX[lineSel] - startX[lineSel])*cos(5*3.1415/180)) - (finishY[lineSel] - startY[lineSel])*sin(5*3.1415/180);
+            float ry = (startY[lineSel] + (finishX[lineSel] - startX[lineSel])*sin(5*3.1415/180)) +(finishY[lineSel] - startY[lineSel])*cos(5*3.1415/180);
+
+            finishX[lineSel] = rx;
+            finishY[lineSel] = ry;
+            lines[lineSel] = (Line(startX[lineSel], startY[lineSel], rx, ry, currentLineColor[lineSel], alg));
+
+            repaint();
+            flagR[lineSel] = true;
+        } else {
+
+            lineSel = ui->comboBox->currentIndex();
+            if (lineSel > 0) {
+                lines[lineSel - 1] = (Line(startX[lineSel-1], startY[lineSel-1], finishX[lineSel-1], finishY[lineSel-1], currentLineColor[lineSel-1], alg));
+
+            } else {
+                lines[lineSel + 1] = (Line(startX[lineSel+1], startY[lineSel+1], finishX[lineSel+1], finishY[lineSel+1], currentLineColor[lineSel+1], alg));
+            }
+
+            alg = ui->cmbAlghoritms->currentIndex();
+
+            rotate[lineSel] = ui->lineLengthBundle->text().toDouble(&key);
+            if (!key) {
+                QMessageBox::critical(this, "Ошибка", "Некорректный ввод!");
+                return;
+            }
+
+//            lines.append(Line(startX[lineSel], startY[lineSel], finishX[lineSel], finishY[lineSel], currentBackgroundColor, alg));
+//            repaint();
+
+
+            float rx = (startX[lineSel] + (finishX[lineSel] - startX[lineSel])*cos(5*3.1415/180)) - (finishY[lineSel] - startY[lineSel])*sin(5*3.1415/180);
+            float ry = (startY[lineSel] + (finishX[lineSel] - startX[lineSel])*sin(5*3.1415/180)) +(finishY[lineSel] - startY[lineSel])*cos(5*3.1415/180);
+
+            finishX[lineSel] = rx;
+            finishY[lineSel] = ry;
+            lines[lineSel] = (Line(startX[lineSel], startY[lineSel], rx, ry, currentLineColor[lineSel], alg));
+
+            repaint();
+        }
+    }
+
+    if (e->key() == Qt::Key_Plus){
+        ui->label_9->setText("ПОВОРОТ ПО ЧС");
+        lineSel = ui->comboBox->currentIndex();
+        if (flagR[lineSel] == false) {
+
+            if (lineSel > 0) {
+                lines[lineSel-1] = (Line(startX[lineSel-1], startY[lineSel-1], finishX[lineSel-1], finishY[lineSel-1], currentLineColor[lineSel-1], alg));
+                repaint();
+            } else {
+                lines[lineSel+1] = (Line(startX[lineSel+1], startY[lineSel+1], finishX[lineSel+1], finishY[lineSel+1], currentLineColor[lineSel+1], alg));
+                repaint();
+            }
+
+            alg = ui->cmbAlghoritms->currentIndex();
+
+            key = false;
+            startX[lineSel] = ui->lineStartX->text().toDouble(&key);
+            if (!key) {
+                QMessageBox::critical(this, "Ошибка", "Некорректный ввод!");
+                return;
+            }
+
+            startY[lineSel] = ui->lineStartY->text().toDouble(&key);
+            if (!key) {
+                QMessageBox::critical(this, "Ошибка", "Некорректный ввод!");
+                return;
+            }
+
+            finishX[lineSel] = ui->lineFinishX->text().toDouble(&key);
+            if (!key) {
+                QMessageBox::critical(this, "Ошибка", "Некорректный ввод!");
+                return;
+            }
+
+            finishY[lineSel] = ui->lineFinishY->text().toDouble(&key);
+            if (!key) {
+                QMessageBox::critical(this, "Ошибка", "Некорректный ввод!");
+                return;
+            }
+
+//            lines.append(Line(startX[lineSel], startY[lineSel], finishX[lineSel], finishY[lineSel], currentBackgroundColor, alg));
+//            repaint();
+
+//            lines.removeAt(lineSel);
+//            repaint();
+
+            float rx = (startX[lineSel] + (finishX[lineSel] - startX[lineSel])*cos(-5*3.1415/180)) - (finishY[lineSel] - startY[lineSel])*sin(-5*3.1415/180);
+            float ry = (startY[lineSel] + (finishX[lineSel] - startX[lineSel])*sin(-5*3.1415/180)) +(finishY[lineSel] - startY[lineSel])*cos(-5*3.1415/180);
+
+            finishX[lineSel] = rx;
+            finishY[lineSel] = ry;
+            lines[lineSel] = (Line(startX[lineSel], startY[lineSel], rx, ry, currentLineColor[lineSel], alg));
+
+            repaint();
+            flagR[lineSel] = true;
+        } else {
+            if (lineSel > 0) {
+                lines[lineSel-1] = (Line(startX[lineSel-1], startY[lineSel-1], finishX[lineSel-1], finishY[lineSel-1], currentLineColor[lineSel-1], alg));
+                repaint();
+            } else {
+                lines[lineSel+1] = (Line(startX[lineSel+1], startY[lineSel+1], finishX[lineSel+1], finishY[lineSel+1], currentLineColor[lineSel+1], alg));
+                repaint();
+            }
+            alg = ui->cmbAlghoritms->currentIndex();
+
+            rotate[lineSel] = ui->lineLengthBundle->text().toDouble(&key);
+            if (!key) {
+                QMessageBox::critical(this, "Ошибка", "Некорректный ввод!");
+                return;
+            }
+
+//            lines.append(Line(startX[lineSel], startY[lineSel], finishX[lineSel], finishY[lineSel], currentBackgroundColor, alg));
+//            lines.removeAt(lineSel);
+//            repaint();
+            float rx = (startX[lineSel] + (finishX[lineSel] - startX[lineSel])*cos(-5*3.1415/180)) - (finishY[lineSel] - startY[lineSel])*sin(-5*3.1415/180);
+            float ry = (startY[lineSel] + (finishX[lineSel] - startX[lineSel])*sin(-5*3.1415/180)) +(finishY[lineSel] - startY[lineSel])*cos(-5*3.1415/180);
+
+            finishX[lineSel] = rx;
+            finishY[lineSel] = ry;
+            lines[lineSel] = (Line(startX[lineSel], startY[lineSel], rx, ry, currentLineColor[lineSel], alg));
+
+            repaint();
+        }
+    }
+}
+
+void MainWindow::keyReleaseEvent(QKeyEvent *e)
+{
+    if (e->key() == Qt::Key_Up){
+        ui->label_9->setText(" ");
+    }
+    if (e->key() == Qt::Key_Down){
+        ui->label_9->setText(" ");
+    }
+    if (e->key() == Qt::Key_Right){
+        ui->label_9->setText(" ");
+    }
+    if (e->key() == Qt::Key_Left){
+        ui->label_9->setText(" ");
+    }
+    if (e->key() == Qt::Key_Plus){
+        ui->label_9->setText(" ");
+    }
+    if (e->key() == Qt::Key_Minus){
+        ui->label_9->setText(" ");
     }
 }
 
 void MainWindow::on_btnLine_clicked()
 {
-    lineSel = ui->cmbAlghoritms->currentIndex();
+    lineSel = ui->comboBox->currentIndex();
+    currentLineColor[lineSel] = color;
     if (flagD[lineSel] == false) {
+
 
         alg = ui->cmbAlghoritms->currentIndex();
 
@@ -88,19 +307,20 @@ void MainWindow::on_btnLine_clicked()
             return;
         }
 
-        lines.append(Line(startX[lineSel], startY[lineSel], finishX[lineSel], finishY[lineSel], currentLineColor, alg));
+        lines[lineSel] = Line(startX[lineSel], startY[lineSel], finishX[lineSel], finishY[lineSel], currentLineColor[lineSel], alg);
 
         repaint();
 
         flagD[lineSel] = true;
     } else {
 
-        lineSel = ui->cmbAlghoritms->currentIndex();
+//        lines.append(Line(startX[lineSel], startY[lineSel], finishX[lineSel], finishY[lineSel], currentBackgroundColor, alg));
+//        repaint();
+
+//        lineSel = ui->comboBox->currentIndex();
+//        lines.removeAt(lineSel);
+//        repaint();
         alg = ui->cmbAlghoritms->currentIndex();
-
-        lines.append(Line(startX[lineSel], startY[lineSel], finishX[lineSel], finishY[lineSel], currentBackgroundColor, alg));
-        repaint();
-
         key = false;
         startX[lineSel] = ui->lineStartX->text().toDouble(&key);
         if (!key) {
@@ -126,7 +346,7 @@ void MainWindow::on_btnLine_clicked()
             return;
         }
 
-        lines.append(Line(startX[lineSel], startY[lineSel], finishX[lineSel], finishY[lineSel], currentLineColor, alg));
+        lines[lineSel] = Line(startX[lineSel], startY[lineSel], finishX[lineSel], finishY[lineSel], currentLineColor[lineSel], alg);
 
         repaint();
 
@@ -136,8 +356,16 @@ void MainWindow::on_btnLine_clicked()
 
 void MainWindow::on_btnRotate_clicked()
 {
-    lineSel = ui->cmbAlghoritms->currentIndex();
+    lineSel = ui->comboBox->currentIndex();
     if (flagR[lineSel] == false && flagD[lineSel] == false) {
+
+        if (lineSel > 0) {
+            lines[lineSel - 1] = (Line(startX[lineSel-1], startY[lineSel-1], finishX[lineSel-1], finishY[lineSel-1], currentLineColor[lineSel-1], alg));
+            repaint();
+        } else {
+            lines[lineSel + 1] = (Line(startX[lineSel+1], startY[lineSel+1], finishX[lineSel+1], finishY[lineSel+1], currentLineColor[lineSel+1], alg));
+            repaint();
+        }
 
         alg = ui->cmbAlghoritms->currentIndex();
 
@@ -165,19 +393,26 @@ void MainWindow::on_btnRotate_clicked()
             QMessageBox::critical(this, "Ошибка", "Некорректный ввод!");
             return;
         }
-        lines.append(Line(startX[lineSel], startY[lineSel], finishX[lineSel], finishY[lineSel], currentBackgroundColor, alg));
-        repaint();
+//        lines.append(Line(startX[lineSel], startY[lineSel], finishX[lineSel], finishY[lineSel], currentBackgroundColor, alg));
+//        repaint();
         int rx = (startX[lineSel] + (finishX[lineSel] - startX[lineSel])*cos(rotate[lineSel]*3.1415/180)) - (finishY[lineSel] - startY[lineSel])*sin(rotate[lineSel]*3.1415/180);
         int ry = (startY[lineSel] + (finishX[lineSel] - startX[lineSel])*sin(rotate[lineSel]*3.1415/180)) +(finishY[lineSel] - startY[lineSel])*cos(rotate[lineSel]*3.1415/180);
 
         finishX[lineSel] = rx;
         finishY[lineSel] = ry;
-        lines.append(Line(startX[lineSel], startY[lineSel], rx, ry, currentLineColor, alg));
+        lines[lineSel] = (Line(startX[lineSel], startY[lineSel], rx, ry, currentLineColor[lineSel], alg));
 
         repaint();
         flagR[lineSel] = true;
     } else {
-        lineSel = ui->cmbAlghoritms->currentIndex();
+        lineSel = ui->comboBox->currentIndex();
+        if (lineSel > 0) {
+            lines[lineSel - 1] = (Line(startX[lineSel-1], startY[lineSel-1], finishX[lineSel-1], finishY[lineSel-1], currentLineColor[lineSel-1], alg));
+            repaint();
+        } else {
+            lines[lineSel + 1] = (Line(startX[lineSel+1], startY[lineSel+1], finishX[lineSel+1], finishY[lineSel+1], currentLineColor[lineSel+1], alg));
+            repaint();
+        }
         alg = ui->cmbAlghoritms->currentIndex();
 
         rotate[lineSel] = ui->lineLengthBundle->text().toDouble(&key);
@@ -186,14 +421,14 @@ void MainWindow::on_btnRotate_clicked()
             return;
         }
 
-        lines.append(Line(startX[lineSel], startY[lineSel], finishX[lineSel], finishY[lineSel], currentBackgroundColor, alg));
-        repaint();
+//        lines.append(Line(startX[lineSel], startY[lineSel], finishX[lineSel], finishY[lineSel], currentBackgroundColor, alg));
+//        repaint();
         int rx = (startX[lineSel] + (finishX[lineSel] - startX[lineSel])*cos(rotate[lineSel]*3.1415/180)) - (finishY[lineSel] - startY[lineSel])*sin(rotate[lineSel]*3.1415/180);
         int ry = (startY[lineSel] + (finishX[lineSel] - startX[lineSel])*sin(rotate[lineSel]*3.1415/180)) +(finishY[lineSel] - startY[lineSel])*cos(rotate[lineSel]*3.1415/180);
 
         finishX[lineSel] = rx;
         finishY[lineSel] = ry;
-        lines.append(Line(startX[lineSel], startY[lineSel], rx, ry, currentLineColor, alg));
+        lines[lineSel] = (Line(startX[lineSel], startY[lineSel], rx, ry, currentLineColor[lineSel], alg));
 
         repaint();
     }
@@ -209,11 +444,18 @@ void MainWindow::on_pushButtonScale_clicked()
         QMessageBox::critical(this, "Ошибка", "Некорректный ввод!");
         return;
     }
-    lineSel = ui->cmbAlghoritms->currentIndex();
+    lineSel = ui->comboBox->currentIndex();
+    if (lineSel > 0) {
+        lines[lineSel - 1] = (Line(startX[lineSel-1], startY[lineSel-1], finishX[lineSel-1], finishY[lineSel-1], currentLineColor[lineSel-1], alg));
+        repaint();
+    } else {
+        lines[lineSel + 1] = (Line(startX[lineSel+1], startY[lineSel+1], finishX[lineSel+1], finishY[lineSel+1], currentLineColor[lineSel+1], alg));
+        repaint();
+    }
     alg = ui->cmbAlghoritms->currentIndex();
 
-    lines.append(Line(startX[lineSel], startY[lineSel], finishX[lineSel], finishY[lineSel], currentBackgroundColor, alg));
-    repaint();
+//    lines.append(Line(startX[lineSel], startY[lineSel], finishX[lineSel], finishY[lineSel], currentBackgroundColor, alg));
+//    repaint();
 
     int x0 = (startX[lineSel] + finishX[lineSel])/2;
 
@@ -225,7 +467,7 @@ void MainWindow::on_pushButtonScale_clicked()
     int y1 = y0*(1-scale) + startY[lineSel] * scale;
     int y2 = y0*(1-scale) + finishY[lineSel] * scale;
 
-    lines.append(Line(x1, y1, x2, y2, currentLineColor, alg));
+    lines[lineSel] = (Line(x1, y1, x2, y2, currentLineColor[lineSel], alg));
 
     repaint();
     startX[lineSel] = x1;
@@ -239,16 +481,23 @@ void MainWindow::on_pushButtonScale_clicked()
 }
 
 void MainWindow::on_pushButtonUp_clicked(){
-    lineSel = ui->cmbAlghoritms->currentIndex();
+    lineSel = ui->comboBox->currentIndex();
+    if (lineSel > 0) {
+        lines[lineSel - 1] = (Line(startX[lineSel-1], startY[lineSel-1], finishX[lineSel-1], finishY[lineSel-1], currentLineColor[lineSel-1], alg));
+        repaint();
+    } else {
+        lines[lineSel + 1] = (Line(startX[lineSel+1], startY[lineSel+1], finishX[lineSel+1], finishY[lineSel+1], currentLineColor[lineSel+1], alg));
+        repaint();
+    }
     alg = ui->cmbAlghoritms->currentIndex();
 
-    lines.append(Line(startX[lineSel], startY[lineSel], finishX[lineSel], finishY[lineSel], currentBackgroundColor, alg));
-    repaint();
+//    lines.append(Line(startX[lineSel], startY[lineSel], finishX[lineSel], finishY[lineSel], currentBackgroundColor, alg));
+//    repaint();
 
     startY[lineSel] += 5;
     finishY[lineSel] += 5;
 
-    lines.append(Line(startX[lineSel], startY[lineSel], finishX[lineSel], finishY[lineSel], currentLineColor, alg));
+    lines[lineSel] = (Line(startX[lineSel], startY[lineSel], finishX[lineSel], finishY[lineSel], currentLineColor[lineSel], alg));
 
     repaint();
 
@@ -258,16 +507,23 @@ void MainWindow::on_pushButtonUp_clicked(){
 
 };
 void MainWindow::on_pushButtonDown_clicked(){
-    lineSel = ui->cmbAlghoritms->currentIndex();
+    lineSel = ui->comboBox->currentIndex();
+    if (lineSel > 0) {
+        lines[lineSel - 1] = (Line(startX[lineSel-1], startY[lineSel-1], finishX[lineSel-1], finishY[lineSel-1], currentLineColor[lineSel-1], alg));
+        repaint();
+    } else {
+        lines[lineSel + 1] = (Line(startX[lineSel+1], startY[lineSel+1], finishX[lineSel+1], finishY[lineSel+1], currentLineColor[lineSel+1], alg));
+        repaint();
+    }
     alg = ui->cmbAlghoritms->currentIndex();
 
-    lines.append(Line(startX[lineSel], startY[lineSel], finishX[lineSel], finishY[lineSel], currentBackgroundColor, alg));
-    repaint();
+//    lines[lineSel] = (Line(startX[lineSel], startY[lineSel], finishX[lineSel], finishY[lineSel], currentBackgroundColor, alg));
+//    repaint();
 
     startY[lineSel] -= 5;
     finishY[lineSel] -= 5;
 
-    lines.append(Line(startX[lineSel], startY[lineSel], finishX[lineSel], finishY[lineSel], currentLineColor, alg));
+    lines[lineSel] = (Line(startX[lineSel], startY[lineSel], finishX[lineSel], finishY[lineSel], currentLineColor[lineSel], alg));
 
     repaint();
 
@@ -276,16 +532,23 @@ void MainWindow::on_pushButtonDown_clicked(){
     flagD[lineSel] = true;
 };
 void MainWindow::on_pushButtonLeft_clicked(){
-    lineSel = ui->cmbAlghoritms->currentIndex();
+    lineSel = ui->comboBox->currentIndex();
+    if (lineSel > 0) {
+        lines[lineSel - 1] = (Line(startX[lineSel-1], startY[lineSel-1], finishX[lineSel-1], finishY[lineSel-1], currentLineColor[lineSel-1], alg));
+        repaint();
+    } else {
+        lines[lineSel + 1] = (Line(startX[lineSel+1], startY[lineSel+1], finishX[lineSel+1], finishY[lineSel+1], currentLineColor[lineSel+1], alg));
+        repaint();
+    }
     alg = ui->cmbAlghoritms->currentIndex();
 
-    lines.append(Line(startX[lineSel], startY[lineSel], finishX[lineSel], finishY[lineSel], currentBackgroundColor, alg));
-    repaint();
+//    lines.append(Line(startX[lineSel], startY[lineSel], finishX[lineSel], finishY[lineSel], currentBackgroundColor, alg));
+//    repaint();
 
     startX[lineSel] -= 5;
     finishX[lineSel] -= 5;
 
-    lines.append(Line(startX[lineSel], startY[lineSel], finishX[lineSel], finishY[lineSel], currentLineColor, alg));
+    lines[lineSel] = (Line(startX[lineSel], startY[lineSel], finishX[lineSel], finishY[lineSel], currentLineColor[lineSel], alg));
 
     repaint();
 
@@ -294,16 +557,23 @@ void MainWindow::on_pushButtonLeft_clicked(){
     flagD[lineSel] = true;
 };
 void MainWindow::on_pushButtonRight_clicked(){
-    lineSel = ui->cmbAlghoritms->currentIndex();
+    lineSel = ui->comboBox->currentIndex();
+    if (lineSel > 0) {
+        lines[lineSel - 1] = (Line(startX[lineSel-1], startY[lineSel-1], finishX[lineSel-1], finishY[lineSel-1], currentLineColor[lineSel-1], alg));
+        repaint();
+    } else {
+        lines[lineSel + 1] = (Line(startX[lineSel+1], startY[lineSel+1], finishX[lineSel+1], finishY[lineSel+1], currentLineColor[lineSel+1], alg));
+        repaint();
+    }
     alg = ui->cmbAlghoritms->currentIndex();
 
-    lines.append(Line(startX[lineSel], startY[lineSel], finishX[lineSel], finishY[lineSel], currentBackgroundColor, alg));
-    repaint();
+//    lines.append(Line(startX[lineSel], startY[lineSel], finishX[lineSel], finishY[lineSel], currentBackgroundColor, alg));
+//    repaint();
 
     startX[lineSel] += 5;
     finishX[lineSel] += 5;
 
-    lines.append(Line(startX[lineSel], startY[lineSel], finishX[lineSel], finishY[lineSel], currentLineColor, alg));
+    lines[lineSel] = (Line(startX[lineSel], startY[lineSel], finishX[lineSel], finishY[lineSel], currentLineColor[lineSel], alg));
 
     repaint();
 
@@ -313,6 +583,26 @@ void MainWindow::on_pushButtonRight_clicked(){
 };
 
 void MainWindow::on_btnClear_clicked() {
+    for (int i = 0; i < 2; i++) {
+        flagD[i] = false;
+    }
+    for (int i = 0; i < 2; i++) {
+        flagR[i] = false;
+    }
+
+    alg = 0;
+    lineSel = 0;
+    key = false;
+    scale = 0;
+
+    for (int i = 0; i < 2; i++) {
+        rotate[i] = 0;
+        startX[i] = 0;
+        startY[i] = 0;
+        finishX[i] = 0;
+        finishY[i] = 0;
+    }
+
     lines = QList<Line>();
     repaint();
 }
@@ -321,8 +611,10 @@ void MainWindow::on_btnColor_clicked()
 {
     QColorDialog* q = new QColorDialog();
     q->open();
-    currentLineColor = q->getColor();
-    QString qss = QString("background-color: %1").arg(currentLineColor.name());
+    //lineSel = ui->comboBox->currentIndex();
+    //currentLineColor[lineSel] = q->getColor();
+    color = q->getColor();
+    QString qss = QString("background-color: %1").arg(color.name());
     ui->btnColor->setStyleSheet(qss);
     delete q;
 }
@@ -341,7 +633,8 @@ void MainWindow::on_btnBColor_clicked()
 
 void MainWindow::on_pushButton_clicked()
 {
-    currentLineColor = currentBackgroundColor;
-    QString qss = QString("background-color: %1").arg(currentLineColor.name());
+    //lineSel = ui->comboBox->currentIndex();
+    color = currentBackgroundColor;
+    QString qss = QString("background-color: %1").arg(color.name());
     ui->btnColor->setStyleSheet(qss);
 }
